@@ -1,0 +1,29 @@
+{
+  "name": "dine-amite-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "express.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TYohoJr/OurVerySpecialApp-Server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TYohoJr/OurVerySpecialApp-Server/issues"
+  },
+  "homepage": "https://github.com/TYohoJr/OurVerySpecialApp-Server#readme",
+  "dependencies": {
+    "bcrypt": "^1.0.3",
+    "body-parser": "^1.18.2",
+    "dotenv": "^5.0.1",
+    "express": "^4.16.2",
+    "jsonwebtoken": "^8.2.0",
+    "mongodb": "^3.0.4",
+    "path": "^0.12.7",
+    "twilio": "^3.13.0"
+  }
+}

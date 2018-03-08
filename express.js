@@ -7,9 +7,10 @@ const saltRounds = 10;
 var jwt = require('jsonwebtoken');
 var path = require('path')
 require('dotenv').config();
+var cron = require('node-cron');
 
 var twilio = require('twilio');
-var client = new twilio('AC59b806deb1c33e9ad8e6e4f9265c9f63', '05dd7f6c2262b9995c9f97b8c3904424');
+var client = new twilio(`${process.env.TW_ACC}`, `${process.env.TW_KEY}`);
 
 app.use(bodyParser.json({ type: 'application/json' }));
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -40,15 +41,26 @@ MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@ds2
     })
 })
 
-app.post("/text", (req, res) =>{
-    console.log(req.body)
-    client.messages.create({
-        to: `${req.body.number}`,
-        from: '+12407166198',
-        body: 'test6'
-      });
-      
-    res.send("index.html")
+app.post("/text", (req, res) => {
+    if (req.body.number.length) {
+        console.log(req.body)
+        client.messages.create({
+            to: `${req.body.number}`,
+            from: '+12407166198',
+            body: 'You have successfully signed up for daily Dine-amite text alerts!'
+        });
+        cron.schedule('45 11 * * *', function () {
+            client.messages.create({
+                to: `${req.body.number}`,
+                from: '+12407166198',
+                body: `Visit our page for today's lunch specials! www.google.com`
+            });
+            console.log("daily text sent")
+            res.json("User has signed up for text alerts")
+        });
+    } else {
+        res.json("Message not sent, not logged in")
+    }
 })
 
 app.post("/signInData", (req, res) => {
@@ -62,7 +74,7 @@ app.post("/signInData", (req, res) => {
         bcrypt.compare(req.body.password, user[0].password, function (err, resolve) {
             //res == true
             if (resolve === true) {
-               var token = jwt.sign(req.body.username, ('Secret'), {
+                var token = jwt.sign(req.body.username, ('Secret'), {
                     //expiresInMinutes: 1440 // expires in 24 hours, no longer valid, probs deprecated
                 });
                 res.json({
@@ -70,7 +82,8 @@ app.post("/signInData", (req, res) => {
                     myToken: token,
                     number: user[0].number
                 });
-            } else if(resolve === false){
+                console.log("Sign in successful")
+            } else if (resolve === false) {
                 res.json({
                     message: "Login failed!",
                 })
@@ -85,7 +98,7 @@ app.post('/signUpData', (req, res) => {
             if (!dataMatch.length) {
                 bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
                     // Store hash in your password DB.
-                    db.collection('users').save({ username: req.body.username, password: hash, number:req.body.number }, (err, result) => {
+                    db.collection('users').save({ username: req.body.username, password: hash, number: req.body.number }, (err, result) => {
                         if (err) {
                             res.json("Failed")
                             return console.log(err);

@@ -58,7 +58,7 @@ app.post("/text", verifyToken, (req, res) => {
             client.messages.create({
                 to: `${req.body.number}`,
                 from: '+12407166198',
-                body: `Visit our page for today's lunch specials! www.google.com`
+                body: `Visit our page for today's lunch specials! https://dine-amite.herokuapp.com/`
             });
             console.log("daily text sent")
             res.json("User has signed up for text alerts")

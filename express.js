@@ -6,11 +6,10 @@ var bcrypt = require('bcrypt');
 const saltRounds = 10;
 var jwt = require('jsonwebtoken');
 var path = require('path')
+require('dotenv').config();
 
 var twilio = require('twilio');
 var client = new twilio('AC59b806deb1c33e9ad8e6e4f9265c9f63', '05dd7f6c2262b9995c9f97b8c3904424');
-
-
 
 app.use(bodyParser.json({ type: 'application/json' }));
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -33,9 +32,9 @@ var db;
 //     }
 // }
 
-MongoClient.connect(`mongodb://localhost:27017/moby`, (err, client) => {
+MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@ds261838.mlab.com:61838/dine-amite`, (err, client) => {
     if (err) return console.log(err)
-    db = client.db("moby") // whatever your database name is
+    db = client.db("dine-amite") // whatever your database name is
     app.listen(8080, () => {
         console.log("listening on 8080")
     })

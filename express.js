@@ -12,36 +12,41 @@ var cron = require('node-cron');
 var twilio = require('twilio');
 var client = new twilio(`${process.env.TW_ACC}`, `${process.env.TW_KEY}`);
 
+app.use(express.static(path.join(__dirname, "build")));
 app.use(bodyParser.json({ type: 'application/json' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 var db;
 
-// function verifyToken(req, res, next) {
-//     var token = req.body.token;
-//     if (token) {
-//         jwt.verify(token, "Secret", (err, decode) => {
-//             if (err) {
-//                 res.send("Wrong token")
-//             } else {
-//                 res.locals.decode = decode
-//                 next();
-//             }
-//         })
-//     } else {
-//         res.send("No token")
-//     }
-// }
+function verifyToken(req, res, next) {
+    var token = req.body.token;
+    if (token) {
+        jwt.verify(token, "Secret", (err, decode) => {
+            if (err) {
+                res.send("Wrong token")
+            } else {
+                res.locals.decode = decode
+                next();
+            }
+        })
+    } else {
+        res.send("No token")
+    }
+}
 
 MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@ds261838.mlab.com:61838/dine-amite`, (err, client) => {
     if (err) return console.log(err)
     db = client.db("dine-amite") // whatever your database name is
-    app.listen(8080, () => {
+    app.listen(process.env.PORT || 8080, () => {
         console.log("listening on 8080")
     })
 })
 
-app.post("/text", (req, res) => {
+app.get("/", (req, res) =>{
+    res.sendFile("index.html")
+})
+
+app.post("/text", verifyToken, (req, res) => {
     if (req.body.number.length) {
         console.log(req.body)
         client.messages.create({

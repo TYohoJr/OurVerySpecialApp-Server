@@ -42,7 +42,7 @@ MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@ds2
     })
 })
 
-app.get("/", (req, res) =>{
+app.get("/", (req, res) => {
     res.sendFile("index.html")
 })
 
@@ -101,18 +101,23 @@ app.post('/signUpData', (req, res) => {
     if (req.body.username.length && req.body.password.length) {
         db.collection('users').find({ username: req.body.username }).toArray((err, dataMatch) => {
             if (!dataMatch.length) {
-                bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
-                    // Store hash in your password DB.
-                    db.collection('users').save({ username: req.body.username, password: hash, number: req.body.number }, (err, result) => {
-                        if (err) {
-                            res.json("Failed")
-                            return console.log(err);
-                        } else {
-                            res.json("Sign Up Successful")
-                            console.log('saved to database');
-                        }
+                if (req.body.number.length === 10) {
+                    req.body.number = `+1${req.body.number}`
+                    bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+                        // Store hash in your password DB.
+                        db.collection('users').save({ username: req.body.username, password: hash, number: req.body.number }, (err, result) => {
+                            if (err) {
+                                res.json("Failed")
+                                return console.log(err);
+                            } else {
+                                res.json("Sign Up Successful")
+                                console.log('saved to database');
+                            }
+                        });
                     });
-                });
+                } else {
+                    res.json(`Please enter a 10 digit phone number`)
+                }
             } else {
                 res.json('This username already exists')
             }

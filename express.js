@@ -76,7 +76,6 @@ app.post("/text", verifyToken, (req, res) => {
 
             res.json("User has signed up for text alerts")
         });
-        console.log(task)
     } else {
         res.json("Message not sent, not logged in")
     }

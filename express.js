@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 var db;
 var task = [];
 
-Array.prototype.remove = function() {
+Array.prototype.remove = function () {
     var what, a = arguments, L = a.length, ax;
     while (L && this.length) {
         what = a[--L];
@@ -73,9 +73,10 @@ app.post("/text", verifyToken, (req, res) => {
                 body: `Visit our page for today's lunch specials! https://dine-amite.herokuapp.com/`
             });
             console.log(`daily text sent to ${req.body.number}`)
-            
+
             res.json("User has signed up for text alerts")
         });
+        console.log(task)
     } else {
         res.json("Message not sent, not logged in")
     }
@@ -83,7 +84,7 @@ app.post("/text", verifyToken, (req, res) => {
 
 app.post("/signInData", (req, res) => {
     db.collection("users").find({ username: req.body.username }).toArray((err, user) => {
-
+        console.log(user)
         if (!user.length) {
             res.json("Login unsuccessfull");
         } else if (err) {
@@ -98,7 +99,8 @@ app.post("/signInData", (req, res) => {
                 res.json({
                     message: "Login successful!",
                     myToken: token,
-                    number: user[0].number
+                    number: user[0].number,
+                    tncSubscribe: user[0].tncSubscribe
                 });
                 console.log("Sign in successful")
             } else if (resolve === false) {
@@ -140,11 +142,84 @@ app.post('/signUpData', (req, res) => {
     }
 });
 
+app.post("/textTnC", verifyToken, (req, res) => {
+    db.collection('users').save({ tncSubscribe: "TnC" }, (err, result) => {
+    });
+    if (req.body.number.length) {
+        console.log(req.body)
+        client.messages.create({
+            to: `${req.body.number}`,
+            from: '+12407166198',
+            body: 'You have successfully signed up for daily Town and Country text alerts from Dineamite!'
+        });
+        task[req.body.number] = cron.schedule('30 11 * * *', function () {
+            client.messages.create({
+                to: `${req.body.number}`,
+                from: '+12407166198',
+                body: `Visit our page for today's lunch specials for Town and Country! https://dine-amite.herokuapp.com/`
+            });
+            console.log(`daily TnC text sent to ${req.body.number}`)
+            res.json("User has signed up for TnC text alerts")
+        });
+        console.log(task)
+    } else {
+        res.json("Message not sent, not logged in")
+    }
+})
+
+app.post("/textHeebs", verifyToken, (req, res) => {
+    if (req.body.number.length) {
+        console.log(req.body)
+        client.messages.create({
+            to: `${req.body.number}`,
+            from: '+12407166198',
+            body: 'You have successfully signed up for daily Heebs text alerts from Dineamite!'
+        });
+        task[req.body.number] = cron.schedule('0 10 * * *', function () {
+            client.messages.create({
+                to: `${req.body.number}`,
+                from: '+12407166198',
+                body: `Visit our page for today's lunch specials for Heebs! https://dine-amite.herokuapp.com/`
+            });
+            console.log(`daily Heebs text sent to ${req.body.number}`)
+            res.json("User has signed up for Heebs text alerts")
+        });
+        console.log(task)
+    } else {
+        res.json("Message not sent, not logged in")
+    }
+})
+
+app.post("/textDaves", verifyToken, (req, res) => {
+    if (req.body.number.length) {
+        console.log(req.body)
+        client.messages.create({
+            to: `${req.body.number}`,
+            from: '+12407166198',
+            body: 'You have successfully signed up for daily Daves Sushi text alerts from Dineamite!'
+        });
+        task[req.body.number] = cron.schedule('0 3 * * *', function () {
+            client.messages.create({
+                to: `${req.body.number}`,
+                from: '+12407166198',
+                body: `Visit our page for today's lunch specials for Daves Sushi! https://dine-amite.herokuapp.com/`
+            });
+            console.log(`daily Dave Sushi text sent to ${req.body.number}`)
+            res.json("User has signed up for Daves Sushi text alerts")
+        });
+        console.log(task)
+    } else {
+        res.json("Message not sent, not logged in")
+    }
+})
+
 app.post("/stopText", verifyToken, (req, res) => {
+    console.log(task)
+    console.log(req.body)
     task[req.body.number].destroy();
     client.messages.create({
         to: `${req.body.number}`,
         from: '+12407166198',
-        body: 'You have successfully unsubscribed from Dine-amite text alerts :('
+        body: `You have successfully unsubscribed from Dine-amite text alerts :'(`
     });
 })

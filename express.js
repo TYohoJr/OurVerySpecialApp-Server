@@ -17,6 +17,18 @@ app.use(bodyParser.json({ type: 'application/json' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 var db;
+var task = [];
+
+Array.prototype.remove = function() {
+    var what, a = arguments, L = a.length, ax;
+    while (L && this.length) {
+        what = a[--L];
+        while ((ax = this.indexOf(what)) !== -1) {
+            this.splice(ax, 1);
+        }
+    }
+    return this;
+};
 
 function verifyToken(req, res, next) {
     var token = req.body.token;
@@ -54,13 +66,14 @@ app.post("/text", verifyToken, (req, res) => {
             from: '+12407166198',
             body: 'You have successfully signed up for daily Dine-amite text alerts!'
         });
-        cron.schedule('45 11 * * *', function () {
+        task[req.body.number] = cron.schedule('28 * * * *', function () {
             client.messages.create({
                 to: `${req.body.number}`,
                 from: '+12407166198',
                 body: `Visit our page for today's lunch specials! https://dine-amite.herokuapp.com/`
             });
-            console.log("daily text sent")
+            console.log(`daily text sent to ${req.body.number}`)
+            
             res.json("User has signed up for text alerts")
         });
     } else {
@@ -126,3 +139,12 @@ app.post('/signUpData', (req, res) => {
         res.json('Error: username or password can\'t be blank')
     }
 });
+
+app.post("/stopText", verifyToken, (req, res) => {
+    task[req.body.number].destroy();
+    client.messages.create({
+        to: `${req.body.number}`,
+        from: '+12407166198',
+        body: 'You have successfully unsubscribed from Dine-amite text alerts :('
+    });
+})

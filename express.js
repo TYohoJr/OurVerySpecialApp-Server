@@ -19,16 +19,16 @@ app.use(bodyParser.urlencoded({ extended: true }));
 var db;
 var task = [];
 
-Array.prototype.remove = function () {
-    var what, a = arguments, L = a.length, ax;
-    while (L && this.length) {
-        what = a[--L];
-        while ((ax = this.indexOf(what)) !== -1) {
-            this.splice(ax, 1);
-        }
-    }
-    return this;
-};
+// Array.prototype.remove = function () {
+//     var what, a = arguments, L = a.length, ax;
+//     while (L && this.length) {
+//         what = a[--L];
+//         while ((ax = this.indexOf(what)) !== -1) {
+//             this.splice(ax, 1);
+//         }
+//     }
+//     return this;
+// };
 
 function verifyToken(req, res, next) {
     var token = req.body.token;
@@ -58,32 +58,32 @@ app.get("/", (req, res) => {
     res.sendFile("index.html")
 })
 
-app.post("/text", verifyToken, (req, res) => {
-    if (req.body.number.length) {
-        console.log(req.body)
-        client.messages.create({
-            to: `${req.body.number}`,
-            from: '+12407166198',
-            body: 'You have successfully signed up for daily Dine-amite text alerts!'
-        });
-        task[req.body.number] = cron.schedule('28 * * * *', function () {
-            client.messages.create({
-                to: `${req.body.number}`,
-                from: '+12407166198',
-                body: `Visit our page for today's lunch specials! https://dine-amite.herokuapp.com/`
-            });
-            console.log(`daily text sent to ${req.body.number}`)
+// app.post("/text", verifyToken, (req, res) => {
+//     if (req.body.number.length) {
+//         console.log(req.body)
+//         client.messages.create({
+//             to: `${req.body.number}`,
+//             from: '+12407166198',
+//             body: 'You have successfully signed up for daily Dine-amite text alerts!'
+//         });
+//         task[req.body.number] = cron.schedule('28 * * * *', function () {
+//             client.messages.create({
+//                 to: `${req.body.number}`,
+//                 from: '+12407166198',
+//                 body: `Visit our page for today's lunch specials! https://dine-amite.herokuapp.com/`
+//             });
+//             console.log(`daily text sent to ${req.body.number}`)
 
-            res.json("User has signed up for text alerts")
-        });
-    } else {
-        res.json("Message not sent, not logged in")
-    }
-})
+//             res.json("User has signed up for text alerts")
+//         });
+//     } else {
+//         res.json("Message not sent, not logged in")
+//     }
+// })
 
 app.post("/signInData", (req, res) => {
     db.collection("users").find({ username: req.body.username }).toArray((err, user) => {
-        console.log(user)
+        // console.log(user)
         if (!user.length) {
             res.json("Login unsuccessfull");
         } else if (err) {
@@ -99,9 +99,11 @@ app.post("/signInData", (req, res) => {
                     message: "Login successful!",
                     myToken: token,
                     number: user[0].number,
-                    tncSubscribe: user[0].tncSubscribe
+                    tncSubscribe: user[0].tncSubscribe,
+                    heebsSubscribe: user[0].heebsSubscribe,
+                    davesSubscribe: user[0].davesSubscribe
                 });
-                console.log("Sign in successful")
+                console.log(`Sign in successful from ${req.body.username}`)
             } else if (resolve === false) {
                 res.json({
                     message: "Login failed!",
@@ -119,7 +121,14 @@ app.post('/signUpData', (req, res) => {
                     req.body.number = `+1${req.body.number}`
                     bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
                         // Store hash in your password DB.
-                        db.collection('users').save({ username: req.body.username, password: hash, number: req.body.number }, (err, result) => {
+                        db.collection('users').save({
+                            username: req.body.username,
+                            password: hash,
+                            number: req.body.number,
+                            tncSubscribe: "",
+                            heebsSubscribe: "",
+                            davesSubscribe: ""
+                        }, (err, result) => {
                             if (err) {
                                 res.json("Failed")
                                 return console.log(err);
@@ -142,33 +151,55 @@ app.post('/signUpData', (req, res) => {
 });
 
 app.post("/textTnC", verifyToken, (req, res) => {
-    db.collection('users').save({ tncSubscribe: "TnC" }, (err, result) => {
-    });
-    if (req.body.number.length) {
-        console.log(req.body)
-        client.messages.create({
-            to: `${req.body.number}`,
-            from: '+12407166198',
-            body: 'You have successfully signed up for daily Town and Country text alerts from Dineamite!'
+    db.collection('users').update(
+        { username: req.body.username },
+        {
+            $set:
+                {
+                    tncSubscribe: "Town and Country"
+                }
+        }, (err, result) => {
         });
-        task[req.body.number] = cron.schedule('30 11 * * *', function () {
+    db.collection("users").find({ username: req.body.username }).toArray((err, user) => {
+        if (req.body.number.length) {
             client.messages.create({
                 to: `${req.body.number}`,
                 from: '+12407166198',
-                body: `Visit our page for today's lunch specials for Town and Country! https://dine-amite.herokuapp.com/`
+                body: 'You have successfully signed up for daily Town and Country text alerts from Dineamite!'
             });
-            console.log(`daily TnC text sent to ${req.body.number}`)
-            res.json("User has signed up for TnC text alerts")
-        });
-        console.log(task)
-    } else {
-        res.json("Message not sent, not logged in")
-    }
+            task[req.body.number] = cron.schedule('30 11 * * *', function () {
+                client.messages.create({
+                    to: `${req.body.number}`,
+                    from: '+12407166198',
+                    body: `Visit our page for today's lunch specials for Town and Country! https://dine-amite.herokuapp.com/`
+                });
+            });
+            db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
+                res.json({
+                    message: "User has signed up for TnC text alerts",
+                    number: user1[0].number,
+                    tncSubscribe: user1[0].tncSubscribe,
+                    heebsSubscribe: user1[0].heebsSubscribe,
+                    davesSubscribe: user1[0].davesSubscribe
+                })
+            })
+        } else {
+            res.json("Message not sent, not logged in")
+        }
+    })
 })
 
 app.post("/textHeebs", verifyToken, (req, res) => {
+    db.collection('users').update(
+        { username: req.body.username },
+        {
+            $set:
+                {
+                    heebsSubscribe: "Heebs"
+                }
+        }, (err, result) => {
+        });
     if (req.body.number.length) {
-        console.log(req.body)
         client.messages.create({
             to: `${req.body.number}`,
             from: '+12407166198',
@@ -180,18 +211,32 @@ app.post("/textHeebs", verifyToken, (req, res) => {
                 from: '+12407166198',
                 body: `Visit our page for today's lunch specials for Heebs! https://dine-amite.herokuapp.com/`
             });
-            console.log(`daily Heebs text sent to ${req.body.number}`)
-            res.json("User has signed up for Heebs text alerts")
         });
-        console.log(task)
+        db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
+            res.json({
+                message: "User has signed up for Heebs text alerts",
+                number: user1[0].number,
+                tncSubscribe: user1[0].tncSubscribe,
+                heebsSubscribe: user1[0].heebsSubscribe,
+                davesSubscribe: user1[0].davesSubscribe
+            })
+        })
     } else {
         res.json("Message not sent, not logged in")
     }
 })
 
 app.post("/textDaves", verifyToken, (req, res) => {
+    db.collection('users').update(
+        { username: req.body.username },
+        {
+            $set:
+                {
+                    davesSubscribe: "Daves Sushi"
+                }
+        }, (err, result) => {
+        });
     if (req.body.number.length) {
-        console.log(req.body)
         client.messages.create({
             to: `${req.body.number}`,
             from: '+12407166198',
@@ -203,22 +248,69 @@ app.post("/textDaves", verifyToken, (req, res) => {
                 from: '+12407166198',
                 body: `Visit our page for today's lunch specials for Daves Sushi! https://dine-amite.herokuapp.com/`
             });
-            console.log(`daily Dave Sushi text sent to ${req.body.number}`)
-            res.json("User has signed up for Daves Sushi text alerts")
         });
-        console.log(task)
+        db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
+            res.json({
+                message: "User has signed up for TnC text alerts",
+                number: user1[0].number,
+                tncSubscribe: user1[0].tncSubscribe,
+                heebsSubscribe: user1[0].heebsSubscribe,
+                davesSubscribe: user1[0].davesSubscribe
+            })
+        })
     } else {
         res.json("Message not sent, not logged in")
     }
 })
 
 app.post("/stopText", verifyToken, (req, res) => {
-    console.log(task)
-    console.log(req.body)
-    task[req.body.number].destroy();
-    client.messages.create({
-        to: `${req.body.number}`,
-        from: '+12407166198',
-        body: `You have successfully unsubscribed from Dine-amite text alerts :'(`
-    });
+    db.collection('users').update(
+        { username: req.body.username },
+        {
+            $set:
+                {
+                    tncSubscribe: "",
+                    heebsSubscribe: "",
+                    davesSubscribe: ""
+                }
+        }, (err, result) => {
+        });
+    if (task[req.body.number]) {
+        db.collection("users").find({ username: req.body.username }).toArray((err, user2) => {
+            res.json({
+                tncSubscribe: user2[0].tncSubscribe,
+                heebsSubscribe: user2[0].heebsSubscribe,
+                davesSubscribe: user2[0].davesSubscribe,
+                number: user2[0].number
+            })
+        })
+        delete task[req.body.number]
+        // task[req.body.number].destroy();
+        console.log(`task destroy success for ${req.body.username}:${req.body.number}`)
+        client.messages.create({
+            to: `${req.body.number}`,
+            from: '+12407166198',
+            body: `You have successfully unsubscribed from Dine-amite text alerts :'(`
+        });
+    } else {
+        console.log(`task destroy failed for ${req.body.username}:${req.body.number}`)
+        res.json({
+            message: `You aren't currently subscribed to any text alerts`
+        })
+    }
+})
+
+app.post("/testText", verifyToken, (req, res) => {
+    if (req.body.number.length) {
+        client.messages.create({
+            to: `${req.body.number}`,
+            from: '+12407166198',
+            body: 'This is a test SMS from Dineamite!'
+        });
+        // res.json({
+        //     message:``
+        // })
+    } else {
+        res.json("Message not sent, not logged in")
+    }
 })

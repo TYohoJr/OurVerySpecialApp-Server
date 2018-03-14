@@ -19,17 +19,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 var db;
 var task = [];
 
-// Array.prototype.remove = function () {
-//     var what, a = arguments, L = a.length, ax;
-//     while (L && this.length) {
-//         what = a[--L];
-//         while ((ax = this.indexOf(what)) !== -1) {
-//             this.splice(ax, 1);
-//         }
-//     }
-//     return this;
-// };
-
 function verifyToken(req, res, next) {
     var token = req.body.token;
     if (token) {
@@ -58,32 +47,8 @@ app.get("/", (req, res) => {
     res.sendFile("index.html")
 })
 
-// app.post("/text", verifyToken, (req, res) => {
-//     if (req.body.number.length) {
-//         console.log(req.body)
-//         client.messages.create({
-//             to: `${req.body.number}`,
-//             from: '+12407166198',
-//             body: 'You have successfully signed up for daily Dine-amite text alerts!'
-//         });
-//         task[req.body.number] = cron.schedule('28 * * * *', function () {
-//             client.messages.create({
-//                 to: `${req.body.number}`,
-//                 from: '+12407166198',
-//                 body: `Visit our page for today's lunch specials! https://dine-amite.herokuapp.com/`
-//             });
-//             console.log(`daily text sent to ${req.body.number}`)
-
-//             res.json("User has signed up for text alerts")
-//         });
-//     } else {
-//         res.json("Message not sent, not logged in")
-//     }
-// })
-
 app.post("/signInData", (req, res) => {
     db.collection("users").find({ username: req.body.username }).toArray((err, user) => {
-        // console.log(user)
         if (!user.length) {
             res.json("Login unsuccessfull");
         } else if (err) {
@@ -93,7 +58,6 @@ app.post("/signInData", (req, res) => {
             //res == true
             if (resolve === true) {
                 var token = jwt.sign(req.body.username, ('Secret'), {
-                    //expiresInMinutes: 1440 // expires in 24 hours, no longer valid, probs deprecated
                 });
                 res.json({
                     message: "Login successful!",
@@ -285,7 +249,6 @@ app.post("/stopText", verifyToken, (req, res) => {
             })
         })
         delete task[req.body.number]
-        // task[req.body.number].destroy();
         console.log(`task destroy success for ${req.body.username}:${req.body.number}`)
         client.messages.create({
             to: `${req.body.number}`,
@@ -307,9 +270,6 @@ app.post("/testText", verifyToken, (req, res) => {
             from: '+12407166198',
             body: 'This is a test SMS from Dineamite!'
         });
-        // res.json({
-        //     message:``
-        // })
     } else {
         res.json("Message not sent, not logged in")
     }

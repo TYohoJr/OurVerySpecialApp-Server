@@ -50,10 +50,14 @@ app.get("/", (req, res) => {
 app.post("/signInData", (req, res) => {
     db.collection("users").find({ username: req.body.username }).toArray((err, user) => {
         if (!user.length) {
-            res.json("Login unsuccessfull");
+            res.json({
+                message:"Login unsuccessfull"
+            });
         } else if (err) {
-            res.json("Login unsuccessfull");
-        }
+            res.json({
+                message:"Login unsuccessfull"
+            });
+        } else {
         bcrypt.compare(req.body.password, user[0].password, function (err, resolve) {
             //res == true
             if (resolve === true) {
@@ -74,6 +78,7 @@ app.post("/signInData", (req, res) => {
                 })
             }
         });
+    }
     })
 });
 

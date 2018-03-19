@@ -119,6 +119,39 @@ app.post('/signUpData', (req, res) => {
     }
 });
 
+app.post('/signUpBiz', (req, res) => {
+    if (req.body.username.length && req.body.password.length) {
+        db.collection('users').find({ username: req.body.username }).toArray((err, dataMatch) => {
+            if (!dataMatch.length) {
+                    req.body.number = `+1${req.body.number}`
+                    bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+                        // Store hash in your password DB.
+                        db.collection('users').save({
+                            bizusername: req.body.username,
+                            password: hash,
+                            email: req.body.email,
+                            
+
+                        }, (err, result) => {
+                            if (err) {
+                                res.json("Failed")
+                                return console.log(err);
+                            } else {
+                                res.json("Sign Up Successful")
+                                console.log('saved to database');
+                            }
+                        });
+                    });
+                
+            } else {
+                res.json('This username already exists')
+            }
+        })
+    } else {
+        res.json('Error: username or password can\'t be blank')
+    }
+});
+
 app.post("/textTnC", verifyToken, (req, res) => {
     db.collection('users').update(
         { username: req.body.username },

@@ -69,7 +69,8 @@ app.post("/signInData", (req, res) => {
                     number: user[0].number,
                     tncSubscribe: user[0].tncSubscribe,
                     heebsSubscribe: user[0].heebsSubscribe,
-                    davesSubscribe: user[0].davesSubscribe
+                    davesSubscribe: user[0].davesSubscribe,
+                    fillingSubscribe: user1[0].fillingSubscribe,
                 });
                 console.log(`Sign in successful from ${req.body.username}`)
             } else if (resolve === false) {
@@ -96,7 +97,8 @@ app.post('/signUpData', (req, res) => {
                             number: req.body.number,
                             tncSubscribe: "",
                             heebsSubscribe: "",
-                            davesSubscribe: ""
+                            davesSubscribe: "",
+                            fillingSubscribe: ""
                         }, (err, result) => {
                             if (err) {
                                 res.json("Failed")
@@ -149,7 +151,8 @@ app.post("/textTnC", verifyToken, (req, res) => {
                     number: user1[0].number,
                     tncSubscribe: user1[0].tncSubscribe,
                     heebsSubscribe: user1[0].heebsSubscribe,
-                    davesSubscribe: user1[0].davesSubscribe
+                    davesSubscribe: user1[0].davesSubscribe,
+                    fillingSubscribe: user1[0].fillingSubscribe,
                 })
             })
         } else {
@@ -187,7 +190,8 @@ app.post("/textHeebs", verifyToken, (req, res) => {
                 number: user1[0].number,
                 tncSubscribe: user1[0].tncSubscribe,
                 heebsSubscribe: user1[0].heebsSubscribe,
-                davesSubscribe: user1[0].davesSubscribe
+                davesSubscribe: user1[0].davesSubscribe,
+                fillingSubscribe: user1[0].fillingSubscribe,
             })
         })
     } else {
@@ -211,7 +215,7 @@ app.post("/textDaves", verifyToken, (req, res) => {
             from: '+12407166198',
             body: 'You have successfully signed up for daily Daves Sushi text alerts from Dineamite!'
         });
-        task[req.body.number] = cron.schedule('0 3 * * *', function () {
+        task[req.body.number] = cron.schedule('0 13 * * *', function () {
             client.messages.create({
                 to: `${req.body.number}`,
                 from: '+12407166198',
@@ -224,7 +228,46 @@ app.post("/textDaves", verifyToken, (req, res) => {
                 number: user1[0].number,
                 tncSubscribe: user1[0].tncSubscribe,
                 heebsSubscribe: user1[0].heebsSubscribe,
-                davesSubscribe: user1[0].davesSubscribe
+                davesSubscribe: user1[0].davesSubscribe,
+                fillingSubscribe: user1[0].fillingSubscribe,
+            })
+        })
+    } else {
+        res.json("Message not sent, not logged in")
+    }
+})
+
+app.post("/textFilling", verifyToken, (req, res)=>{
+    db.collection('users').update(
+        { username: req.body.username },
+        {
+            $set:
+                {
+                    fillingSubscribe: "Filling Station"
+                }
+        }, (err, result) => {
+        });
+    if (req.body.number.length) {
+        client.messages.create({
+            to: `${req.body.number}`,
+            from: '+12407166198',
+            body: 'You have successfully signed up for daily Filling Station text alerts from Dineamite!'
+        });
+        task[req.body.number] = cron.schedule('0 11 * * *', function () {
+            client.messages.create({
+                to: `${req.body.number}`,
+                from: '+12407166198',
+                body: `Visit our page for info one The Filling Station! https://dine-amite.herokuapp.com/`
+            });
+        });
+        db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
+            res.json({
+                message: "User has signed up for Filling Station text alerts",
+                number: user1[0].number,
+                tncSubscribe: user1[0].tncSubscribe,
+                heebsSubscribe: user1[0].heebsSubscribe,
+                davesSubscribe: user1[0].davesSubscribe,
+                fillingSubscribe: user1[0].fillingSubscribe,
             })
         })
     } else {
@@ -240,7 +283,8 @@ app.post("/stopText", verifyToken, (req, res) => {
                 {
                     tncSubscribe: "",
                     heebsSubscribe: "",
-                    davesSubscribe: ""
+                    davesSubscribe: "",
+                    fillingSubscribe: ""
                 }
         }, (err, result) => {
         });
@@ -250,6 +294,7 @@ app.post("/stopText", verifyToken, (req, res) => {
                 tncSubscribe: user2[0].tncSubscribe,
                 heebsSubscribe: user2[0].heebsSubscribe,
                 davesSubscribe: user2[0].davesSubscribe,
+                fillingSubscribe:user2[0].fillingSubscribe,
                 number: user2[0].number
             })
         })

@@ -136,8 +136,6 @@ app.post('/signUpBiz', (req, res) => {
                             bizusername: req.body.username,
                             password: hash,
                             email: req.body.email,
-                            
-
                         }, (err, result) => {
                             if (err) {
                                 res.json("Failed")

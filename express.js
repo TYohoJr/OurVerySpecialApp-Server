@@ -70,7 +70,9 @@ app.post("/signInData", (req, res) => {
                     tncSubscribe: user[0].tncSubscribe,
                     heebsSubscribe: user[0].heebsSubscribe,
                     davesSubscribe: user[0].davesSubscribe,
-                    fillingSubscribe: user1[0].fillingSubscribe,
+                    fillingSubscribe: user[0].fillingSubscribe,
+                    zebraSubscribe: user[0].zebraSubscribe,
+                    rialtoSubscribe: user[0].rialtoSubscribe
                 });
                 console.log(`Sign in successful from ${req.body.username}`)
             } else if (resolve === false) {
@@ -98,7 +100,9 @@ app.post('/signUpData', (req, res) => {
                             tncSubscribe: "",
                             heebsSubscribe: "",
                             davesSubscribe: "",
-                            fillingSubscribe: ""
+                            fillingSubscribe: "",
+                            zebraSubscribe:"",
+                            rialtoSubscribe:""
                         }, (err, result) => {
                             if (err) {
                                 res.json("Failed")
@@ -153,6 +157,8 @@ app.post("/textTnC", verifyToken, (req, res) => {
                     heebsSubscribe: user1[0].heebsSubscribe,
                     davesSubscribe: user1[0].davesSubscribe,
                     fillingSubscribe: user1[0].fillingSubscribe,
+                    zebraSubscribe: user1[0].zebraSubscribe,
+                    rialtoSubscribe: user1[0].rialtoSubscribe
                 })
             })
         } else {
@@ -192,6 +198,8 @@ app.post("/textHeebs", verifyToken, (req, res) => {
                 heebsSubscribe: user1[0].heebsSubscribe,
                 davesSubscribe: user1[0].davesSubscribe,
                 fillingSubscribe: user1[0].fillingSubscribe,
+                zebraSubscribe: user1[0].zebraSubscribe,
+                rialtoSubscribe: user1[0].rialtoSubscribe
             })
         })
     } else {
@@ -230,6 +238,8 @@ app.post("/textDaves", verifyToken, (req, res) => {
                 heebsSubscribe: user1[0].heebsSubscribe,
                 davesSubscribe: user1[0].davesSubscribe,
                 fillingSubscribe: user1[0].fillingSubscribe,
+                zebraSubscribe: user1[0].zebraSubscribe,
+                rialtoSubscribe: user1[0].rialtoSubscribe
             })
         })
     } else {
@@ -257,7 +267,7 @@ app.post("/textFilling", verifyToken, (req, res)=>{
             client.messages.create({
                 to: `${req.body.number}`,
                 from: '+12407166198',
-                body: `Visit our page for info one The Filling Station! https://dine-amite.herokuapp.com/`
+                body: `Visit our page for info on The Filling Station! https://dine-amite.herokuapp.com/`
             });
         });
         db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
@@ -268,6 +278,88 @@ app.post("/textFilling", verifyToken, (req, res)=>{
                 heebsSubscribe: user1[0].heebsSubscribe,
                 davesSubscribe: user1[0].davesSubscribe,
                 fillingSubscribe: user1[0].fillingSubscribe,
+                zebraSubscribe: user1[0].zebraSubscribe,
+                rialtoSubscribe: user1[0].rialtoSubscribe
+            })
+        })
+    } else {
+        res.json("Message not sent, not logged in")
+    }
+})
+
+app.post("/textZebra", verifyToken, (req, res)=>{
+    db.collection('users').update(
+        { username: req.body.username },
+        {
+            $set:
+                {
+                    zebraSubscribe: "Zebra Lounge"
+                }
+        }, (err, result) => {
+        });
+    if (req.body.number.length) {
+        client.messages.create({
+            to: `${req.body.number}`,
+            from: '+12407166198',
+            body: 'You have successfully signed up for daily Zebra Lounge text alerts from Dineamite!'
+        });
+        task[req.body.number] = cron.schedule('0 11 * * *', function () {
+            client.messages.create({
+                to: `${req.body.number}`,
+                from: '+12407166198',
+                body: `Visit our page for info on The Zebra Lounge! https://dine-amite.herokuapp.com/`
+            });
+        });
+        db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
+            res.json({
+                message: "User has signed up for Zebra Lounge text alerts",
+                number: user1[0].number,
+                tncSubscribe: user1[0].tncSubscribe,
+                heebsSubscribe: user1[0].heebsSubscribe,
+                davesSubscribe: user1[0].davesSubscribe,
+                fillingSubscribe: user1[0].fillingSubscribe,
+                zebraSubscribe: user1[0].zebraSubscribe,
+                rialtoSubscribe: user1[0].rialtoSubscribe
+            })
+        })
+    } else {
+        res.json("Message not sent, not logged in")
+    }
+})
+
+app.post("/textRialto", verifyToken, (req, res)=>{
+    db.collection('users').update(
+        { username: req.body.username },
+        {
+            $set:
+                {
+                    rialtoSubscribe: "The Rialto"
+                }
+        }, (err, result) => {
+        });
+    if (req.body.number.length) {
+        client.messages.create({
+            to: `${req.body.number}`,
+            from: '+12407166198',
+            body: 'You have successfully signed up for daily The Rialto text alerts from Dineamite!'
+        });
+        task[req.body.number] = cron.schedule('0 11 * * *', function () {
+            client.messages.create({
+                to: `${req.body.number}`,
+                from: '+12407166198',
+                body: `Visit our page for info on The Rialto! https://dine-amite.herokuapp.com/`
+            });
+        });
+        db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
+            res.json({
+                message: "User has signed up for The Rialto text alerts",
+                number: user1[0].number,
+                tncSubscribe: user1[0].tncSubscribe,
+                heebsSubscribe: user1[0].heebsSubscribe,
+                davesSubscribe: user1[0].davesSubscribe,
+                fillingSubscribe: user1[0].fillingSubscribe,
+                zebraSubscribe: user1[0].zebraSubscribe,
+                rialtoSubscribe: user1[0].rialtoSubscribe
             })
         })
     } else {
@@ -284,7 +376,9 @@ app.post("/stopText", verifyToken, (req, res) => {
                     tncSubscribe: "",
                     heebsSubscribe: "",
                     davesSubscribe: "",
-                    fillingSubscribe: ""
+                    fillingSubscribe: "",
+                    zebraSubscribe:"",
+                    rialtoSubscribe:""
                 }
         }, (err, result) => {
         });
@@ -295,6 +389,8 @@ app.post("/stopText", verifyToken, (req, res) => {
                 heebsSubscribe: user2[0].heebsSubscribe,
                 davesSubscribe: user2[0].davesSubscribe,
                 fillingSubscribe:user2[0].fillingSubscribe,
+                zebraSubscribe: user2[0].zebraSubscribe,
+                rialtoSubscribe: user2[0].rialtoSubscribe,
                 number: user2[0].number
             })
         })

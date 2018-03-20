@@ -47,41 +47,78 @@ app.get("/", (req, res) => {
     res.sendFile("index.html")
 })
 
+app.post("/sendListItem", verifyToken, (req, res) => {
+    console.log(req.body.item);
+    console.log(req.body.number)
+    db.collection("users").update(
+        { number: req.body.number },
+        {
+            $push: {
+                items: req.body.item
+            }
+        }
+    )
+    db.collection("users").find({ number: req.body.number }).toArray((err, user) => {
+        res.json({
+            item:user
+        })
+    })
+})
+
+app.post("/removeListItem", verifyToken, (req, res) => {
+    console.log(req.body.item);
+    console.log(req.body.number)
+    db.collection("users").update(
+        { number: req.body.number },
+        {
+            $pull: {
+                items: req.body.item
+            }
+        }
+    )
+    db.collection("users").find({ number: req.body.number }).toArray((err, user) => {
+        res.json({
+            item:user
+        })
+    })
+})
+
 app.post("/signInData", (req, res) => {
     db.collection("users").find({ username: req.body.username }).toArray((err, user) => {
         if (!user.length) {
             res.json({
-                message:"Login unsuccessfull"
+                message: "Login unsuccessfull"
             });
         } else if (err) {
             res.json({
-                message:"Login unsuccessfull"
+                message: "Login unsuccessfull"
             });
         } else {
-        bcrypt.compare(req.body.password, user[0].password, function (err, resolve) {
-            //res == true
-            if (resolve === true) {
-                var token = jwt.sign(req.body.username, ('Secret'), {
-                });
-                res.json({
-                    message: "Login successful!",
-                    myToken: token,
-                    number: user[0].number,
-                    tncSubscribe: user[0].tncSubscribe,
-                    heebsSubscribe: user[0].heebsSubscribe,
-                    davesSubscribe: user[0].davesSubscribe,
-                    fillingSubscribe: user[0].fillingSubscribe,
-                    zebraSubscribe: user[0].zebraSubscribe,
-                    rialtoSubscribe: user[0].rialtoSubscribe
-                });
-                console.log(`Sign in successful from ${req.body.username}`)
-            } else if (resolve === false) {
-                res.json({
-                    message: "Login failed!",
-                })
-            }
-        });
-    }
+            bcrypt.compare(req.body.password, user[0].password, function (err, resolve) {
+                //res == true
+                if (resolve === true) {
+                    var token = jwt.sign(req.body.username, ('Secret'), {
+                    });
+                    res.json({
+                        message: "Login successful!",
+                        myToken: token,
+                        number: user[0].number,
+                        tncSubscribe: user[0].tncSubscribe,
+                        heebsSubscribe: user[0].heebsSubscribe,
+                        davesSubscribe: user[0].davesSubscribe,
+                        fillingSubscribe: user[0].fillingSubscribe,
+                        zebraSubscribe: user[0].zebraSubscribe,
+                        rialtoSubscribe: user[0].rialtoSubscribe,
+                        item:user
+                    });
+                    console.log(`Sign in successful from ${req.body.username}`)
+                } else if (resolve === false) {
+                    res.json({
+                        message: "Login failed!",
+                    })
+                }
+            });
+        }
     })
 });
 
@@ -100,8 +137,9 @@ app.post('/signUpData', (req, res) => {
                             heebsSubscribe: "",
                             davesSubscribe: "",
                             fillingSubscribe: "",
-                            zebraSubscribe:"",
-                            rialtoSubscribe:""
+                            zebraSubscribe: "",
+                            rialtoSubscribe: "",
+                            items: []
                         }, (err, result) => {
                             if (err) {
                                 res.json("Failed")
@@ -128,24 +166,24 @@ app.post('/signUpBiz', (req, res) => {
     if (req.body.username.length && req.body.password.length) {
         db.collection('users').find({ username: req.body.username }).toArray((err, dataMatch) => {
             if (!dataMatch.length) {
-                    req.body.number = `+1${req.body.number}`
-                    bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
-                        // Store hash in your password DB.
-                        db.collection('users').save({
-                            bizusername: req.body.username,
-                            password: hash,
-                            email: req.body.email,
-                        }, (err, result) => {
-                            if (err) {
-                                res.json("Failed")
-                                return console.log(err);
-                            } else {
-                                res.json("Sign Up Successful")
-                                console.log('saved to database');
-                            }
-                        });
+                req.body.number = `+1${req.body.number}`
+                bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+                    // Store hash in your password DB.
+                    db.collection('users').save({
+                        bizusername: req.body.username,
+                        password: hash,
+                        email: req.body.email,
+                    }, (err, result) => {
+                        if (err) {
+                            res.json("Failed")
+                            return console.log(err);
+                        } else {
+                            res.json("Sign Up Successful")
+                            console.log('saved to database');
+                        }
                     });
-                
+                });
+
             } else {
                 res.json('This username already exists')
             }
@@ -277,7 +315,7 @@ app.post("/textDaves", verifyToken, (req, res) => {
     }
 })
 
-app.post("/textFilling", verifyToken, (req, res)=>{
+app.post("/textFilling", verifyToken, (req, res) => {
     db.collection('users').update(
         { username: req.body.username },
         {
@@ -317,7 +355,7 @@ app.post("/textFilling", verifyToken, (req, res)=>{
     }
 })
 
-app.post("/textZebra", verifyToken, (req, res)=>{
+app.post("/textZebra", verifyToken, (req, res) => {
     db.collection('users').update(
         { username: req.body.username },
         {
@@ -357,7 +395,7 @@ app.post("/textZebra", verifyToken, (req, res)=>{
     }
 })
 
-app.post("/textRialto", verifyToken, (req, res)=>{
+app.post("/textRialto", verifyToken, (req, res) => {
     db.collection('users').update(
         { username: req.body.username },
         {
@@ -407,8 +445,8 @@ app.post("/stopText", verifyToken, (req, res) => {
                     heebsSubscribe: "",
                     davesSubscribe: "",
                     fillingSubscribe: "",
-                    zebraSubscribe:"",
-                    rialtoSubscribe:""
+                    zebraSubscribe: "",
+                    rialtoSubscribe: ""
                 }
         }, (err, result) => {
         });
@@ -418,7 +456,7 @@ app.post("/stopText", verifyToken, (req, res) => {
                 tncSubscribe: user2[0].tncSubscribe,
                 heebsSubscribe: user2[0].heebsSubscribe,
                 davesSubscribe: user2[0].davesSubscribe,
-                fillingSubscribe:user2[0].fillingSubscribe,
+                fillingSubscribe: user2[0].fillingSubscribe,
                 zebraSubscribe: user2[0].zebraSubscribe,
                 rialtoSubscribe: user2[0].rialtoSubscribe,
                 number: user2[0].number

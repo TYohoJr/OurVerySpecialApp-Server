@@ -47,6 +47,47 @@ app.get("/", (req, res) => {
     res.sendFile("index.html")
 })
 
+app.post('/subscribeToPlace', verifyToken, (req, res)=>{
+    db.collection('users').update(
+        { username: req.body.username },
+        {
+            $addToSet:
+                {
+                    subscriptions: req.body.place
+                }
+        }, (err, result) => {
+            if (err){
+                res.json(err);
+            }
+        });
+    db.collection("users").find({ username: req.body.username }).toArray((err, user) => {
+
+
+        //if (req.body.number.length) {
+            client.messages.create({
+                to: `${req.body.number}`,
+                from: '+12407166198',
+                body: 'You have successfully signed up for daily Town and Country text alerts from Dineamite!'
+            });
+            task[req.body.number] = cron.schedule('30 11 * * *', function () {
+                client.messages.create({
+                    to: `${req.body.number}`,
+                    from: '+12407166198',
+                    body: `Visit our page for today's lunch specials for Town and Country! https://dine-amite.herokuapp.com/`
+                });
+            });
+            db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
+                if (err){
+                    console.log(err);
+                }
+                res.json(user1[0]);
+            })
+        // } else {
+        //     res.json("Message not sent, not logged in")
+        // }
+    })
+});
+
 app.post("/sendListItem", verifyToken, (req, res) => {
     console.log(req.body.item);
     console.log(req.body.number)
@@ -102,14 +143,7 @@ app.post("/signInData", (req, res) => {
                     res.json({
                         message: "Login successful!",
                         myToken: token,
-                        number: user[0].number,
-                        tncSubscribe: user[0].tncSubscribe,
-                        heebsSubscribe: user[0].heebsSubscribe,
-                        davesSubscribe: user[0].davesSubscribe,
-                        fillingSubscribe: user[0].fillingSubscribe,
-                        zebraSubscribe: user[0].zebraSubscribe,
-                        rialtoSubscribe: user[0].rialtoSubscribe,
-                        item:user
+                        user:user[0]
                     });
                     console.log(`Sign in successful from ${req.body.username}`)
                 } else if (resolve === false) {
@@ -197,9 +231,9 @@ app.post("/textTnC", verifyToken, (req, res) => {
     db.collection('users').update(
         { username: req.body.username },
         {
-            $set:
+            $addToSet:
                 {
-                    tncSubscribe: "Town and Country"
+                    subscriptions: req.body.place
                 }
         }, (err, result) => {
         });
@@ -441,25 +475,15 @@ app.post("/stopText", verifyToken, (req, res) => {
         {
             $set:
                 {
-                    tncSubscribe: "",
-                    heebsSubscribe: "",
-                    davesSubscribe: "",
-                    fillingSubscribe: "",
-                    zebraSubscribe: "",
-                    rialtoSubscribe: ""
+                    subscriptions:[]
                 }
         }, (err, result) => {
+            console.log(result)      
         });
-    if (task[req.body.number]) {
         db.collection("users").find({ username: req.body.username }).toArray((err, user2) => {
+            console.log('sendin data')
             res.json({
-                tncSubscribe: user2[0].tncSubscribe,
-                heebsSubscribe: user2[0].heebsSubscribe,
-                davesSubscribe: user2[0].davesSubscribe,
-                fillingSubscribe: user2[0].fillingSubscribe,
-                zebraSubscribe: user2[0].zebraSubscribe,
-                rialtoSubscribe: user2[0].rialtoSubscribe,
-                number: user2[0].number
+               user:user2[0]
             })
         })
         delete task[req.body.number]
@@ -469,12 +493,7 @@ app.post("/stopText", verifyToken, (req, res) => {
             from: '+12407166198',
             body: `You have successfully unsubscribed from Dine-amite text alerts :'(`
         });
-    } else {
-        console.log(`task destroy failed for ${req.body.username}:${req.body.number}`)
-        res.json({
-            message: `You aren't currently subscribed to any text alerts`
-        })
-    }
+
 })
 
 app.post("/testText", verifyToken, (req, res) => {

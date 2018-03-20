@@ -92,7 +92,6 @@ app.post('/signUpData', (req, res) => {
                 if (req.body.number.length === 10) {
                     req.body.number = `+1${req.body.number}`
                     bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
-                        // Store hash in your password DB.
                         db.collection('users').save({
                             username: req.body.username,
                             password: hash,

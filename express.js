@@ -92,7 +92,7 @@ app.post("/sendListItem", verifyToken, (req, res) => {
     db.collection("users").update(
         { number: req.body.number },
         {
-            $push: {
+            $addToSet: {
                 items: req.body.item
             }
         }
@@ -100,7 +100,7 @@ app.post("/sendListItem", verifyToken, (req, res) => {
     // Send the entire user object back to the front-end
     db.collection("users").find({ number: req.body.number }).toArray((err, user) => {
         res.json({
-            item: user
+            user: user[0]
         })
     })
 })
@@ -118,12 +118,13 @@ app.post("/removeListItem", verifyToken, (req, res) => {
     // Send back the entire user object back to the front-end
     db.collection("users").find({ number: req.body.number }).toArray((err, user) => {
         res.json({
-            item: user
+            user: user[0]
         })
     })
 })
 
 app.post("/signInData", (req, res) => {
+    console.log(req.body)
     db.collection("users").find({ username: req.body.username }).toArray((err, user) => {
         if (!user.length) {
             res.json({
@@ -135,6 +136,7 @@ app.post("/signInData", (req, res) => {
             });
         } else {
             // Un-hash the password to verify login
+            
             bcrypt.compare(req.body.password, user[0].password, function (err, resolve) {
                 //res == true
                 if (resolve === true) {
@@ -144,7 +146,8 @@ app.post("/signInData", (req, res) => {
                     res.json({
                         message: "Login successful!",
                         myToken: token,
-                        user: user[0]
+                        user: user[0],
+                        item: user
                     });
                     console.log(`Sign in successful from ${req.body.username}`)
                 } else if (resolve === false) {
@@ -158,34 +161,38 @@ app.post("/signInData", (req, res) => {
 });
 
 app.post('/signUpData', (req, res) => {
+    req.body.number = `+1${req.body.number}`
     if (req.body.username.length && req.body.password.length) {
-        db.collection('users').find({ username: req.body.username }).toArray((err, dataMatch) => {
-            if (!dataMatch.length) {
-                if (req.body.number.length === 10) {
-                    req.body.number = `+1${req.body.number}`
-                    // Hash the password before it's stored in the DB
-                    bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
-                        db.collection('users').save({
-                            username: req.body.username,
-                            password: hash,
-                            number: req.body.number,
-                            items: []
-                        }, (err, result) => {
-                            if (err) {
-                                res.json("Failed")
-                                return console.log(err);
-                            } else {
-                                res.json("Sign Up Successful")
-                                console.log('saved to database');
-                            }
-                        });
-                    });
+        db.collection('users').find({ username: req.body.username }).toArray((err, user) => {
+            db.collection('users').find({ number: req.body.number }).toArray((err, user1) => {
+                if (user1.length) {
+                    res.json('This number already exists')
+                } else if (user.length) {
+                    res.json('This username already exists')
                 } else {
-                    res.json(`Please enter a 10 digit phone number`)
+                    if (req.body.number.length === 12) {
+                        bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+                            db.collection('users').save({
+                                username: req.body.username,
+                                password: hash,
+                                number: req.body.number,
+                                items: [],
+                                subscriptions:[]
+                            }, (err, result) => {
+                                if (err) {
+                                    res.json("Failed")
+                                    return console.log(err);
+                                } else {
+                                    res.json("Sign Up Successful")
+                                    console.log('saved to database');
+                                }
+                            });
+                        });
+                    } else {
+                        res.json(`Please enter a 10 digit phone number`)
+                    }
                 }
-            } else {
-                res.json('This username already exists')
-            }
+            })
         })
     } else {
         res.json('Error: username or password can\'t be blank')
@@ -221,6 +228,48 @@ app.post('/signUpBiz', (req, res) => {
         res.json('Error: username or password can\'t be blank')
     }
 });
+
+app.post("/stopText", verifyToken, (req, res) => {
+    // Resets the "subsriptions" array to an empty array
+    db.collection('users').update(
+        { username: req.body.username },
+        {
+            $set:
+                {
+                    subscriptions: []
+                }
+        }, (err, result) => {
+            console.log(result)
+        });
+    db.collection("users").find({ username: req.body.username }).toArray((err, user2) => {
+        console.log('sendin data')
+        res.json({
+            user: user2[0]
+        })
+    })
+    // Delete the scheduled texts
+    delete task[req.body.number]
+    console.log(`task destroy success for ${req.body.username}:${req.body.number}`)
+    client.messages.create({
+        to: `${req.body.number}`,
+        from: '+12407166198',
+        body: `You have successfully unsubscribed from Dine-amite text alerts :'(`
+    });
+
+})
+
+app.post("/testText", verifyToken, (req, res) => {
+    if (req.body.number.length) {
+        // Sends the user a test SMS
+        client.messages.create({
+            to: `${req.body.number}`,
+            from: '+12407166198',
+            body: 'This is a test SMS from Dineamite!'
+        });
+    } else {
+        res.json("Message not sent, not logged in")
+    }
+})
 
 // app.post("/textTnC", verifyToken, (req, res) => {
 //     db.collection('users').update(
@@ -463,45 +512,3 @@ app.post('/signUpBiz', (req, res) => {
 //         res.json("Message not sent, not logged in")
 //     }
 // })
-
-app.post("/stopText", verifyToken, (req, res) => {
-    // Resets the "subsriptions" array to an empty array
-    db.collection('users').update(
-        { username: req.body.username },
-        {
-            $set:
-                {
-                    subscriptions: []
-                }
-        }, (err, result) => {
-            console.log(result)
-        });
-    db.collection("users").find({ username: req.body.username }).toArray((err, user2) => {
-        console.log('sendin data')
-        res.json({
-            user: user2[0]
-        })
-    })
-    // Delete the scheduled texts
-    delete task[req.body.number]
-    console.log(`task destroy success for ${req.body.username}:${req.body.number}`)
-    client.messages.create({
-        to: `${req.body.number}`,
-        from: '+12407166198',
-        body: `You have successfully unsubscribed from Dine-amite text alerts :'(`
-    });
-
-})
-
-app.post("/testText", verifyToken, (req, res) => {
-    if (req.body.number.length) {
-        // Sends the user a test SMS
-        client.messages.create({
-            to: `${req.body.number}`,
-            from: '+12407166198',
-            body: 'This is a test SMS from Dineamite!'
-        });
-    } else {
-        res.json("Message not sent, not logged in")
-    }
-})

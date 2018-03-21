@@ -68,14 +68,15 @@ app.post('/subscribeToPlace', verifyToken, (req, res) => {
         client.messages.create({
             to: `${req.body.number}`,
             from: '+12407166198',
-            body: 'You have successfully signed up for daily Town and Country text alerts from Dineamite!'
+            body: `You have successfully signed up for daily ${req.body.place} text alerts from Dineamite!`
         });
         // Schedule reoccuring daily texts
-        task[req.body.number] = cron.schedule('30 11 * * *', function () {
+        // req.body.time is a string of the correct time, however it errorsif it isn't a string
+        task[req.body.number] = cron.schedule("30 11 * * *", function () {
             client.messages.create({
                 to: `${req.body.number}`,
                 from: '+12407166198',
-                body: `Visit our page for today's lunch specials for Town and Country! https://dine-amite.herokuapp.com/`
+                body: `Visit our page for today's lunch specials for ${req.body.place}! https://dine-amite.herokuapp.com/`
             });
         });
         db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {

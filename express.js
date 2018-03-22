@@ -90,11 +90,12 @@ app.post('/subscribeToPlace', verifyToken, (req, res) => {
 
 app.post("/sendListItem", verifyToken, (req, res) => {
     // Push the string of specials info onto the array in the DB
+    console.log(req.body.item)
     db.collection("users").update(
         { number: req.body.number },
         {
             $addToSet: {
-                items: req.body.item
+                [req.body.item.className]: req.body.item.children
             }
         }
     )
@@ -112,7 +113,8 @@ app.post("/removeListItem", verifyToken, (req, res) => {
         { number: req.body.number },
         {
             $pull: {
-                items: req.body.item
+                [req.body.item.className]: req.body.item.children
+
             }
         }
     )
@@ -125,7 +127,6 @@ app.post("/removeListItem", verifyToken, (req, res) => {
 })
 
 app.post("/signInData", (req, res) => {
-    console.log(req.body)
     db.collection("users").find({ username: req.body.username }).toArray((err, user) => {
         if (!user.length) {
             res.json({
@@ -137,13 +138,13 @@ app.post("/signInData", (req, res) => {
             });
         } else {
             // Un-hash the password to verify login
-            
             bcrypt.compare(req.body.password, user[0].password, function (err, resolve) {
                 //res == true
                 if (resolve === true) {
                     // Upon successful login, assigns the user a token
                     var token = jwt.sign(req.body.username, ('Secret'), {
                     });
+                    console.log(user)
                     res.json({
                         message: "Login successful!",
                         myToken: token,
@@ -178,7 +179,7 @@ app.post('/signUpData', (req, res) => {
                                 password: hash,
                                 number: req.body.number,
                                 items: [],
-                                subscriptions:[]
+                                subscriptions: []
                             }, (err, result) => {
                                 if (err) {
                                     res.json("Failed")
@@ -240,12 +241,11 @@ app.post("/stopText", verifyToken, (req, res) => {
                     subscriptions: []
                 }
         }, (err, result) => {
-            console.log(result)
         });
     db.collection("users").find({ username: req.body.username }).toArray((err, user2) => {
-        console.log('sendin data')
         res.json({
-            user: user2[0]
+            user: user2[0],
+            message: 'You have successfully unsubscribed from all text alerts!'
         })
     })
     // Delete the scheduled texts
@@ -271,245 +271,3 @@ app.post("/testText", verifyToken, (req, res) => {
         res.json("Message not sent, not logged in")
     }
 })
-
-// app.post("/textTnC", verifyToken, (req, res) => {
-//     db.collection('users').update(
-//         { username: req.body.username },
-//         {
-//             $addToSet:
-//                 {
-//                     subscriptions: req.body.place
-//                 }
-//         }, (err, result) => {
-//         });
-//     db.collection("users").find({ username: req.body.username }).toArray((err, user) => {
-//         if (req.body.number.length) {
-//             client.messages.create({
-//                 to: `${req.body.number}`,
-//                 from: '+12407166198',
-//                 body: 'You have successfully signed up for daily Town and Country text alerts from Dineamite!'
-//             });
-//             task[req.body.number] = cron.schedule('30 11 * * *', function () {
-//                 client.messages.create({
-//                     to: `${req.body.number}`,
-//                     from: '+12407166198',
-//                     body: `Visit our page for today's lunch specials for Town and Country! https://dine-amite.herokuapp.com/`
-//                 });
-//             });
-//             db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
-//                 res.json({
-//                     message: "User has signed up for TnC text alerts",
-//                     number: user1[0].number,
-//                     tncSubscribe: user1[0].tncSubscribe,
-//                     heebsSubscribe: user1[0].heebsSubscribe,
-//                     davesSubscribe: user1[0].davesSubscribe,
-//                     fillingSubscribe: user1[0].fillingSubscribe,
-//                     zebraSubscribe: user1[0].zebraSubscribe,
-//                     rialtoSubscribe: user1[0].rialtoSubscribe
-//                 })
-//             })
-//         } else {
-//             res.json("Message not sent, not logged in")
-//         }
-//     })
-// })
-
-// app.post("/textHeebs", verifyToken, (req, res) => {
-//     db.collection('users').update(
-//         { username: req.body.username },
-//         {
-//             $set:
-//                 {
-//                     heebsSubscribe: "Heebs"
-//                 }
-//         }, (err, result) => {
-//         });
-//     if (req.body.number.length) {
-//         client.messages.create({
-//             to: `${req.body.number}`,
-//             from: '+12407166198',
-//             body: 'You have successfully signed up for daily Heebs text alerts from Dineamite!'
-//         });
-//         task[req.body.number] = cron.schedule('0 10 * * *', function () {
-//             client.messages.create({
-//                 to: `${req.body.number}`,
-//                 from: '+12407166198',
-//                 body: `Visit our page for today's lunch specials for Heebs! https://dine-amite.herokuapp.com/`
-//             });
-//         });
-//         db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
-//             res.json({
-//                 message: "User has signed up for Heebs text alerts",
-//                 number: user1[0].number,
-//                 tncSubscribe: user1[0].tncSubscribe,
-//                 heebsSubscribe: user1[0].heebsSubscribe,
-//                 davesSubscribe: user1[0].davesSubscribe,
-//                 fillingSubscribe: user1[0].fillingSubscribe,
-//                 zebraSubscribe: user1[0].zebraSubscribe,
-//                 rialtoSubscribe: user1[0].rialtoSubscribe
-//             })
-//         })
-//     } else {
-//         res.json("Message not sent, not logged in")
-//     }
-// })
-
-// app.post("/textDaves", verifyToken, (req, res) => {
-//     db.collection('users').update(
-//         { username: req.body.username },
-//         {
-//             $set:
-//                 {
-//                     davesSubscribe: "Daves Sushi"
-//                 }
-//         }, (err, result) => {
-//         });
-//     if (req.body.number.length) {
-//         client.messages.create({
-//             to: `${req.body.number}`,
-//             from: '+12407166198',
-//             body: 'You have successfully signed up for daily Daves Sushi text alerts from Dineamite!'
-//         });
-//         task[req.body.number] = cron.schedule('0 13 * * *', function () {
-//             client.messages.create({
-//                 to: `${req.body.number}`,
-//                 from: '+12407166198',
-//                 body: `Visit our page for today's lunch specials for Daves Sushi! https://dine-amite.herokuapp.com/`
-//             });
-//         });
-//         db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
-//             res.json({
-//                 message: "User has signed up for TnC text alerts",
-//                 number: user1[0].number,
-//                 tncSubscribe: user1[0].tncSubscribe,
-//                 heebsSubscribe: user1[0].heebsSubscribe,
-//                 davesSubscribe: user1[0].davesSubscribe,
-//                 fillingSubscribe: user1[0].fillingSubscribe,
-//                 zebraSubscribe: user1[0].zebraSubscribe,
-//                 rialtoSubscribe: user1[0].rialtoSubscribe
-//             })
-//         })
-//     } else {
-//         res.json("Message not sent, not logged in")
-//     }
-// })
-
-// app.post("/textFilling", verifyToken, (req, res) => {
-//     db.collection('users').update(
-//         { username: req.body.username },
-//         {
-//             $set:
-//                 {
-//                     fillingSubscribe: "Filling Station"
-//                 }
-//         }, (err, result) => {
-//         });
-//     if (req.body.number.length) {
-//         client.messages.create({
-//             to: `${req.body.number}`,
-//             from: '+12407166198',
-//             body: 'You have successfully signed up for daily Filling Station text alerts from Dineamite!'
-//         });
-//         task[req.body.number] = cron.schedule('0 11 * * *', function () {
-//             client.messages.create({
-//                 to: `${req.body.number}`,
-//                 from: '+12407166198',
-//                 body: `Visit our page for info on The Filling Station! https://dine-amite.herokuapp.com/`
-//             });
-//         });
-//         db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
-//             res.json({
-//                 message: "User has signed up for Filling Station text alerts",
-//                 number: user1[0].number,
-//                 tncSubscribe: user1[0].tncSubscribe,
-//                 heebsSubscribe: user1[0].heebsSubscribe,
-//                 davesSubscribe: user1[0].davesSubscribe,
-//                 fillingSubscribe: user1[0].fillingSubscribe,
-//                 zebraSubscribe: user1[0].zebraSubscribe,
-//                 rialtoSubscribe: user1[0].rialtoSubscribe
-//             })
-//         })
-//     } else {
-//         res.json("Message not sent, not logged in")
-//     }
-// })
-
-// app.post("/textZebra", verifyToken, (req, res) => {
-//     db.collection('users').update(
-//         { username: req.body.username },
-//         {
-//             $set:
-//                 {
-//                     zebraSubscribe: "Zebra Lounge"
-//                 }
-//         }, (err, result) => {
-//         });
-//     if (req.body.number.length) {
-//         client.messages.create({
-//             to: `${req.body.number}`,
-//             from: '+12407166198',
-//             body: 'You have successfully signed up for daily Zebra Lounge text alerts from Dineamite!'
-//         });
-//         task[req.body.number] = cron.schedule('0 11 * * *', function () {
-//             client.messages.create({
-//                 to: `${req.body.number}`,
-//                 from: '+12407166198',
-//                 body: `Visit our page for info on The Zebra Lounge! https://dine-amite.herokuapp.com/`
-//             });
-//         });
-//         db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
-//             res.json({
-//                 message: "User has signed up for Zebra Lounge text alerts",
-//                 number: user1[0].number,
-//                 tncSubscribe: user1[0].tncSubscribe,
-//                 heebsSubscribe: user1[0].heebsSubscribe,
-//                 davesSubscribe: user1[0].davesSubscribe,
-//                 fillingSubscribe: user1[0].fillingSubscribe,
-//                 zebraSubscribe: user1[0].zebraSubscribe,
-//                 rialtoSubscribe: user1[0].rialtoSubscribe
-//             })
-//         })
-//     } else {
-//         res.json("Message not sent, not logged in")
-//     }
-// })
-
-// app.post("/textRialto", verifyToken, (req, res) => {
-//     db.collection('users').update(
-//         { username: req.body.username },
-//         {
-//             $set:
-//                 {
-//                     rialtoSubscribe: "The Rialto"
-//                 }
-//         }, (err, result) => {
-//         });
-//     if (req.body.number.length) {
-//         client.messages.create({
-//             to: `${req.body.number}`,
-//             from: '+12407166198',
-//             body: 'You have successfully signed up for daily The Rialto text alerts from Dineamite!'
-//         });
-//         task[req.body.number] = cron.schedule('0 11 * * *', function () {
-//             client.messages.create({
-//                 to: `${req.body.number}`,
-//                 from: '+12407166198',
-//                 body: `Visit our page for info on The Rialto! https://dine-amite.herokuapp.com/`
-//             });
-//         });
-//         db.collection("users").find({ username: req.body.username }).toArray((err, user1) => {
-//             res.json({
-//                 message: "User has signed up for The Rialto text alerts",
-//                 number: user1[0].number,
-//                 tncSubscribe: user1[0].tncSubscribe,
-//                 heebsSubscribe: user1[0].heebsSubscribe,
-//                 davesSubscribe: user1[0].davesSubscribe,
-//                 fillingSubscribe: user1[0].fillingSubscribe,
-//                 zebraSubscribe: user1[0].zebraSubscribe,
-//                 rialtoSubscribe: user1[0].rialtoSubscribe
-//             })
-//         })
-//     } else {
-//         res.json("Message not sent, not logged in")
-//     }
-// })

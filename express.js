@@ -90,7 +90,6 @@ app.post('/subscribeToPlace', verifyToken, (req, res) => {
 
 app.post("/sendListItem", verifyToken, (req, res) => {
     // Push the string of specials info onto the array in the DB
-    console.log(req.body.item)
     db.collection("users").update(
         { number: req.body.number },
         {
@@ -144,7 +143,6 @@ app.post("/signInData", (req, res) => {
                     // Upon successful login, assigns the user a token
                     var token = jwt.sign(req.body.username, ('Secret'), {
                     });
-                    console.log(user)
                     res.json({
                         message: "Login successful!",
                         myToken: token,
@@ -178,8 +176,16 @@ app.post('/signUpData', (req, res) => {
                                 username: req.body.username,
                                 password: hash,
                                 number: req.body.number,
-                                items: [],
-                                subscriptions: []
+                                subscriptions: [],
+                                everyweekday: [],
+                                mon: [],
+                                tues: [],
+                                weds: [],
+                                thurs: [],
+                                fri: [],
+                                sat: [],
+                                sun: [],
+                                everyDay: [],
                             }, (err, result) => {
                                 if (err) {
                                     res.json("Failed")

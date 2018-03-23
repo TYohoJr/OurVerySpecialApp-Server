@@ -8,9 +8,9 @@ var jwt = require('jsonwebtoken');
 var path = require('path')
 require('dotenv').config();
 var cron = require('node-cron');
-
 var twilio = require('twilio');
-var client = new twilio(`${process.env.TW_ACC}`, `${process.env.TW_KEY}`);
+
+var client = new twilio(`${process.env.TW_SID}`, `${process.env.TW_TOKEN}`);
 
 app.use(express.static(path.join(__dirname, "build")));
 app.use(bodyParser.json({ type: 'application/json' }));
@@ -67,7 +67,7 @@ app.post('/subscribeToPlace', verifyToken, (req, res) => {
     db.collection("users").find({ username: req.body.username }).toArray((err, user) => {
         client.messages.create({
             to: `${req.body.number}`,
-            from: '+12407166198',
+            from: '+12314653515',
             body: `You have successfully signed up for daily ${req.body.place} text alerts from Dineamite!`
         });
         // Schedule reoccuring daily texts
@@ -75,7 +75,7 @@ app.post('/subscribeToPlace', verifyToken, (req, res) => {
         task[req.body.number] = cron.schedule("30 11 * * *", function () {
             client.messages.create({
                 to: `${req.body.number}`,
-                from: '+12407166198',
+                from: '+12314653515',
                 body: `Visit our page for today's lunch specials for ${req.body.place}! https://dine-amite.herokuapp.com/`
             });
         });
@@ -259,18 +259,19 @@ app.post("/stopText", verifyToken, (req, res) => {
     console.log(`task destroy success for ${req.body.username}:${req.body.number}`)
     client.messages.create({
         to: `${req.body.number}`,
-        from: '+12407166198',
+        from: '+12314653515',
         body: `You have successfully unsubscribed from Dine-amite text alerts :'(`
     });
 
 })
 
 app.post("/testText", verifyToken, (req, res) => {
+    console.log(req.body)
     if (req.body.number.length) {
         // Sends the user a test SMS
         client.messages.create({
             to: `${req.body.number}`,
-            from: '+12407166198',
+            from: '+12314653515',
             body: 'This is a test SMS from Dineamite!'
         });
     } else {

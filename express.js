@@ -162,7 +162,7 @@ app.post("/signInData", (req, res) => {
 
 app.post('/signUpData', (req, res) => {
     req.body.number = `+1${req.body.number}`
-    if (req.body.username.length && req.body.password.length) {
+    if (req.body.username.length && req.body.password.length && req.body.number.length) {
         db.collection('users').find({ username: req.body.username }).toArray((err, user) => {
             db.collection('users').find({ number: req.body.number }).toArray((err, user1) => {
                 if (user1.length) {
@@ -208,32 +208,35 @@ app.post('/signUpData', (req, res) => {
 });
 
 app.post('/signUpBiz', (req, res) => {
-    if (req.body.username.length && req.body.password.length) {
-        db.collection('users').find({ username: req.body.username }).toArray((err, dataMatch) => {
+    console.log(req.body)
+    if (req.body.email.length && req.body.password.length) {
+        db.collection('users').find({ email: req.body.email }).toArray((err, dataMatch) => {
             if (!dataMatch.length) {
-                req.body.number = `+1${req.body.number}`
+                // req.body.number = `+1${req.body.number}`
                 bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
                     // Store hashed password into the DB
                     db.collection('users').save({
-                        bizusername: req.body.username,
-                        password: hash,
                         email: req.body.email,
+                        password: hash,
+                        comments: req.body.comments,
+                        facebookUrl: req.body.facebookUrl,
+
                     }, (err, result) => {
                         if (err) {
                             res.json("Failed")
                             return console.log(err);
                         } else {
-                            res.json("Sign Up Successful")
-                            console.log('saved to database');
+                            res.json(" Business Sign Up Successful")
+                            console.log('new business saved to database');
                         }
                     });
                 });
             } else {
-                res.json('This username already exists')
+                res.json('This email is already registered')
             }
         })
     } else {
-        res.json('Error: username or password can\'t be blank')
+        res.json('Error: email or password can\'t be blank')
     }
 });
 

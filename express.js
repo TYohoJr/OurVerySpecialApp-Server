@@ -210,26 +210,34 @@ app.post('/signUpData', (req, res) => {
 app.post('/signUpBiz', (req, res) => {
     console.log(req.body)
     if (req.body.email.length && req.body.password.length) {
-        db.collection('users').find({ email: req.body.email }).toArray((err, dataMatch) => {
+        db.collection('businessFoodData').find({ email: req.body.email }).toArray((err, dataMatch) => {
             if (!dataMatch.length) {
                 // req.body.number = `+1${req.body.number}`
                 bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
                     // Store hashed password into the DB
-                    db.collection('users').save({
-                        email: req.body.email,
-                        password: hash,
-                        comments: req.body.comments,
-                        facebookUrl: req.body.facebookUrl,
-
-                    }, (err, result) => {
-                        if (err) {
-                            res.json("Failed")
-                            return console.log(err);
-                        } else {
-                            res.json(" Business Sign Up Successful")
-                            console.log('new business saved to database');
-                        }
-                    });
+                    db.collection('businessFoodData').update(
+                        { "_id": "places" },
+                        {
+                            $push:
+                                {
+                                    places: {
+                                        url: req.body.facebookUrl,
+                                    }
+                                }
+                        }, (err, result) => {
+                            if (err) {
+                                res.json("Failed")
+                                return console.log(err);
+                            } else {
+                                db.collection("businessFoodData").find({ "_id": "places" }).toArray((err, user) => {
+                                    res.json({
+                                        user: user[0],
+                                        message: 'Business sign up was successfull!'
+                                    })
+                                })
+                                console.log('new business saved to database');
+                            }
+                        });
                 });
             } else {
                 res.json('This email is already registered')

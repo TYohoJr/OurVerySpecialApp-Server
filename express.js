@@ -222,6 +222,12 @@ app.post('/signUpBiz', (req, res) => {
                                 {
                                     places: {
                                         url: req.body.facebookUrl,
+                                        name:req.body.name,
+                                        links:{
+                                            company:req.body.company,
+                                            review:req.body.review
+                                        },
+                                        comments:req.body.comments
                                     }
                                 }
                         }, (err, result) => {
@@ -247,6 +253,14 @@ app.post('/signUpBiz', (req, res) => {
         res.json('Error: email or password can\'t be blank')
     }
 });
+
+app.get("/getData", (req, res)=>{
+    db.collection("businessFoodData").find({ "_id": "places" }).toArray((err, user) => {
+        res.json({
+            user:user[0]
+        })
+    })
+})
 
 app.post("/stopText", verifyToken, (req, res) => {
     // Resets the "subsriptions" array to an empty array

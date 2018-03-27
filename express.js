@@ -32,6 +32,7 @@ function verifyToken(req, res, next) {
             }
         })
     } else {
+        console.log("no token")
         res.send("No token")
     }
 }
@@ -300,6 +301,21 @@ app.post("/testText", verifyToken, (req, res) => {
             body: 'This is a test SMS from Dineamite!'
         });
     } else {
-        res.json("Message not sent, not logged in")
+        res.json({
+            message: "Message not sent, not logged in"
+        })
     }
 })
+
+app.post("/textList", verifyToken, (req, res) => {
+    // Text user their list
+    client.messages.create({
+        to: `${req.body.number}`,
+        from: '+12314653515',
+        body: `Here is your specials list: ${req.body.list}`
+    });
+    console.log("User can texted their specials list")
+    res.json({
+        message: "User has texted their specials list"
+    })
+});

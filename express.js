@@ -208,10 +208,7 @@ app.post('/signUpData', (req, res) => {
 });
 
 app.post('/signUpBiz', (req, res) => {
-    console.log(req.body)
     if (req.body.email.length && req.body.password.length) {
-        // db.collection('businessFoodData').find({ email:[req.body.email] }).toArray((err, dataMatch) => {
-        //     if (!dataMatch.length) {
         bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
             // Store hashed password into the DB
             db.collection('businessFoodData').update(
@@ -248,12 +245,6 @@ app.post('/signUpBiz', (req, res) => {
                     }
                 });
         });
-        //     } else {
-        //         res.json({
-        //             message: 'This email is already registered'
-        //         })
-        //     }
-        // })
     } else {
         res.json({
             message: 'Error: email or password can\'t be blank'
@@ -302,7 +293,6 @@ app.post("/stopText", verifyToken, (req, res) => {
 })
 
 app.post("/testText", verifyToken, (req, res) => {
-    console.log(req.body)
     if (req.body.number.length) {
         // Sends the user a test SMS
         client.messages.create({

@@ -210,54 +210,65 @@ app.post('/signUpData', (req, res) => {
 app.post('/signUpBiz', (req, res) => {
     console.log(req.body)
     if (req.body.email.length && req.body.password.length) {
-        db.collection('businessFoodData').find({ email: req.body.email }).toArray((err, dataMatch) => {
-            if (!dataMatch.length) {
-                // req.body.number = `+1${req.body.number}`
-                bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
-                    // Store hashed password into the DB
-                    db.collection('businessFoodData').update(
-                        { "_id": "places" },
+        // db.collection('businessFoodData').find({ email:[req.body.email] }).toArray((err, dataMatch) => {
+        //     if (!dataMatch.length) {
+        bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+            // Store hashed password into the DB
+            db.collection('businessFoodData').update(
+                { "_id": "places" },
+                {
+                    $push:
                         {
-                            $push:
-                                {
-                                    places: {
-                                        url: req.body.facebookUrl,
-                                        name:req.body.name,
-                                        links:{
-                                            company:req.body.company,
-                                            review:req.body.review
-                                        },
-                                        comments:req.body.comments
-                                    }
-                                }
-                        }, (err, result) => {
-                            if (err) {
-                                res.json("Failed")
-                                return console.log(err);
-                            } else {
-                                db.collection("businessFoodData").find({ "_id": "places" }).toArray((err, user) => {
-                                    res.json({
-                                        user: user[0],
-                                        message: 'Business sign up was successfull!'
-                                    })
-                                })
-                                console.log('new business saved to database');
+                            places: {
+                                name: req.body.companyName,
+                                email: req.body.email,
+                                password: hash,
+                                url: req.body.facebookUrl,
+                                links: {
+                                    company: req.body.companyWebsite,
+                                    review: req.body.companyReview
+                                },
+                                comments: req.body.comments
                             }
-                        });
+                        }
+                }, (err, result) => {
+                    if (err) {
+                        res.json({
+                            message: "Failed"
+                        })
+                        return console.log(err);
+                    } else {
+                        db.collection("businessFoodData").find({ "_id": "places" }).toArray((err, user) => {
+                            res.json({
+                                user: user[0],
+                                message: 'Business sign up was successfull!'
+                            })
+                        })
+                        console.log('new business saved to database');
+                    }
                 });
-            } else {
-                res.json('This email is already registered')
-            }
-        })
+        });
+        //     } else {
+        //         res.json({
+        //             message: 'This email is already registered'
+        //         })
+        //     }
+        // })
     } else {
-        res.json('Error: email or password can\'t be blank')
+        res.json({
+            message: 'Error: email or password can\'t be blank'
+        })
     }
 });
 
-app.get("/getData", (req, res)=>{
+app.get("/getData", (req, res) => {
     db.collection("businessFoodData").find({ "_id": "places" }).toArray((err, user) => {
-        res.json({
-            user:user[0]
+        db.collection("businessMusicData").find({ "_id": "music" }).toArray((err, user1) => {
+
+            res.json({
+                foodData: user[0],
+                musicData: user1[0]
+            })
         })
     })
 })

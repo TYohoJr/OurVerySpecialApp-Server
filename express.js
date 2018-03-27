@@ -71,7 +71,7 @@ app.post('/subscribeToPlace', verifyToken, (req, res) => {
             body: `You have successfully signed up for daily ${req.body.place} text alerts from Dineamite!`
         });
         // Schedule reoccuring daily texts
-        // req.body.time is a string of the correct time, however it errorsif it isn't a string
+        // req.body.time is a string of the correct time, however it errors if it isn't a string
         task[req.body.number] = cron.schedule("30 11 * * *", function () {
             client.messages.create({
                 to: `${req.body.number}`,
@@ -138,7 +138,6 @@ app.post("/signInData", (req, res) => {
         } else {
             // Un-hash the password to verify login
             bcrypt.compare(req.body.password, user[0].password, function (err, resolve) {
-                //res == true
                 if (resolve === true) {
                     // Upon successful login, assigns the user a token
                     var token = jwt.sign(req.body.username, ('Secret'), {

@@ -114,7 +114,6 @@ app.post("/removeListItem", verifyToken, (req, res) => {
         {
             $pull: {
                 [req.body.item.className]: req.body.item.children
-
             }
         }
     )
@@ -289,7 +288,6 @@ app.post("/stopText", verifyToken, (req, res) => {
         from: '+12314653515',
         body: `You have successfully unsubscribed from Dine-amite text alerts :'(`
     });
-
 })
 
 app.post("/testText", verifyToken, (req, res) => {

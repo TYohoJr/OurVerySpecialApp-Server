@@ -207,7 +207,8 @@ app.post('/signUpData', (req, res) => {
 });
 
 app.post('/signUpBiz', (req, res) => {
-    if (req.body.email.length && req.body.password.length) {
+    console.log(req.body)
+    if (req.body.email && req.body.password && req.body.facebookUrl && req.body.companyName && req.body.companyWebsite && req.body.companyWebsite) {
         bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
             // Store hashed password into the DB
             db.collection('businessFoodData').update(
@@ -246,7 +247,7 @@ app.post('/signUpBiz', (req, res) => {
         });
     } else {
         res.json({
-            message: 'Error: email or password can\'t be blank'
+            message: 'Please fill out all fields'
         })
     }
 });

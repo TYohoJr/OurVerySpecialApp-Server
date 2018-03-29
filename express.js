@@ -299,6 +299,9 @@ app.post("/testText", verifyToken, (req, res) => {
             from: '+12314653515',
             body: 'This is a test SMS from Dineamite!'
         });
+        res.json({
+            message:"Test text sent!"
+        })
     } else {
         res.json({
             message: "Message not sent, not logged in"
